@@ -1,0 +1,5 @@
+flask
+flask_restx
+redis
+nserver
+
