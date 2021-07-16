@@ -25,6 +25,22 @@ If you don't want to run your own local server, you can use and test [hashlookup
 
 CIRCL hashlookup service only gives details about known files appearing in specific database(s). This gives you context and information about file hashes which can be discovered during investigation or digital forensic analysis.
 
+# Installation
+
+- Make sure kvrocks is installed
+- Download the [NSRL files](https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl/nsrl-download/current-rds)
+- In **bin/run.sh** point to where kvrocks is installed
+- - For example "/home/ubuntu/kvrocks/src/kvrocks -c /home/ubuntu/hashlookup-server/etc/kvrocks.conf"
+- In **kvrocks.conf** change
+- - **dir** to where you want to store the database
+- - update **pidfile** **backup-dir** and **log-dir**
+- in **import.py** : point to where you stored the NSRL downloaded files
+- statistics are kept in stat:NSRLAndroid
+- do a test run, in import.py change maxvalue to 2, run import.py and then query the results
+- - redis-cli -p 6666
+- - HGETALL "h:000000F694CA9BF73836D67DEB5E2724338B422D"
+
+
 # API Usage
 
 ## Get information about the hash lookup database (via ReST)
