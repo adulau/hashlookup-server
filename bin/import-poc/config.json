@@ -1,0 +1,23 @@
+{ "nsrl_downloads": {
+    "nsrl_modern_rds":   { "description": "(microcomputer applications) - contains the comprehensive set of ALL appearances of files in  modern applications; many file entries are duplicated",
+                        "url": "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/RDS_modern.iso"},
+    "nsrl_minimal":      { "description": "(minimal) - contains the set of DISTINCT appearances of files in  modern applications; no file entries are duplicated",
+                        "url": "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/rds_modernm.zip"},
+    "nsrl_android":      { "description": "Contains modern Android mobile applications",
+                        "url": "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/RDS_android.iso"},
+    "nsrl_unique":       { "description": "Contains the set of file entries that appear ONLY ONCE  in the entire NSRL collection; these are unique to each off the applications that are in the collection",
+                        "url": "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/rds_modernu.zip"},
+    "nsrl_ios":          { "description": "IOS dataset",
+                        "url": "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/RDS_ios.iso"}
+    },
+  "local_path": "/home/koenv/nsrl/",
+  "import": {
+      "max_value": 500000000,
+      "mod_lines": 2500
+  },
+  "redis": {
+      "hostname": "127.0.0.1",
+      "port": 6666,
+      "flushdb_on_init": 1
+  }
+}
