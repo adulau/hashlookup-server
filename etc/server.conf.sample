@@ -1,2 +1,4 @@
 [global]
-stats = yes 
+stats = yes
+stats_pubsub = yes
+

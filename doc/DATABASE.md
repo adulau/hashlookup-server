@@ -1,8 +1,13 @@
 # Database structure of hashlookup
 
-# Statistics
+## Publish-Subscribe channels
 
-- `s:nx:md5` sorted set of MD5 non-existing hashes looked up
-- `s:nx:sha1` sorted set of SHA1 non-existing hashes looked up
-- `s:exist:md5` sorted set of SHA1 existing hashes looked up
-- `s:exixt:sha1` sorted set of SHA1 existing hashes looked up
+- `nx` JSON message of non-existing hashes searched
+- `exist` JSON message of existing hashes searched
+
+## Statistics
+
+- `s:nx:md5` sorted set of MD5 non-existing hashes
+- `s:nx:sha1` sorted set of SHA1 non-existing hashes
+- `s:exist:md5` sorted set of SHA1 existing hashes
+- `s:exixt:sha1` sorted set of SHA1 existing hashes

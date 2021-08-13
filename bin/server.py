@@ -3,10 +3,12 @@ from flask import Flask, url_for, send_from_directory, render_template, make_res
 from flask_restx import Resource, Api, reqparse
 import redis
 import configparser
+import json
 
 config = configparser.ConfigParser()
 config.read('../etc/server.conf')
 stats = config['global'].getboolean('stats')
+stats_pubsub = config['global'].getboolean('stats')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 api = Api(app, version=version, title='hashlookup CIRCL API', description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. NSRL RDS database is included. More database will be included in the future. The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) some sample queries. The API can be tested live in the interface below.', doc='/', license='CC-BY', contact='info@circl.lu', ordered=True)
@@ -20,6 +22,23 @@ def is_hex(s):
     except ValueError:
         return False
 
+def client_info():
+    if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
+        ip = request.environ['REMOTE_ADDR']
+    else:
+        ip = request.environ['HTTP_X_FORWARDED_FOR']
+    user_agent = request.headers.get('User-Agent')
+    return ({'ip_addr': ip, 'user_agent': user_agent})
+def pub_lookup(channel=None, k=None):
+    if channel is None:
+        return False
+    if k is None:
+        return False
+    client = client_info()
+    client['value'] = k
+    rdb.publish(channel, json.dumps(client))
+    return True
+
 @api.route('/lookup/md5/<string:md5>')
 @api.doc(description="Lookup MD5.")
 class lookup(Resource):
@@ -31,10 +50,15 @@ class lookup(Resource):
         k = md5.upper()
         score = 1
         if not rdb.exists("l:{}".format(k)):
-            rdb.zincrby("s:nx:md5", score, k)
+            if stats:
+                rdb.zincrby("s:nx:md5", score, k)
+            if stats_pubsub:
+                pub_lookup(channel='nx', k=k)
             return {'message': 'Non existing MD5', 'query': md5}, 404
         if stats:
             rdb.zincrby("s:exist:md5", score, k)
+        if stats_pubsub:
+            pub_lookup(channel='exist', k=k)    
         sha1 = rdb.get("l:{}".format(k))
         h = rdb.hgetall("h:{}".format(sha1)) 
         if "OpSystemCode" in h:
@@ -56,10 +80,15 @@ class lookup(Resource):
         k = sha1.upper()
         score = 1
         if not rdb.exists("h:{}".format(k)):
-            rdb.zincrby("s:nx:sha1", score, k)
+            if stats:
+                rdb.zincrby("s:nx:sha1", score, k)
+            if stats_pubsub:
+                pub_lookup(channel='nx', k=k)
             return {'message': 'Non existing SHA-1', 'query': sha1}, 404
         if stats:
             rdb.zincrby("s:exist:sha1", score, k)
+        if stats_pubsub:
+            pub_lookup(channel='exist', k=k)
         h = rdb.hgetall("h:{}".format(k))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
