@@ -25,7 +25,7 @@
       "url": "https://s3.amazonaws.com/rds.nsrl.nist.gov/RDS/current/RDS_legacy.iso"
     }
   },
-  "local_path": "/home/koenv/nsrl/",
+  "local_path": "/home/adulau/",
   "import": {
     "max_value": 500000000,
     "mod_lines": 2500

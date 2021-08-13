@@ -2,7 +2,11 @@ version = "1.0"
 from flask import Flask, url_for, send_from_directory, render_template, make_response, request
 from flask_restx import Resource, Api, reqparse
 import redis
+import configparser
 
+config = configparser.ConfigParser()
+config.read('../etc/server.conf')
+stats = config['global'].getboolean('stats')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 api = Api(app, version=version, title='hashlookup CIRCL API', description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. NSRL RDS database is included. More database will be included in the future. The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) some sample queries. The API can be tested live in the interface below.', doc='/', license='CC-BY', contact='info@circl.lu', ordered=True)
@@ -24,9 +28,14 @@ class lookup(Resource):
             return {'message': 'Expecting a MD5 hex value'}, 400 
         if not is_hex(md5):
             return {'message': 'MD5 is not in hex format'}, 400
-        if not rdb.exists("l:{}".format(md5.upper())):
+        k = md5.upper()
+        score = 1
+        if not rdb.exists("l:{}".format(k)):
+            rdb.zincrby("s:nx:md5", score, k)
             return {'message': 'Non existing MD5', 'query': md5}, 404
-        sha1 = rdb.get("l:{}".format(md5.upper()))
+        if stats:
+            rdb.zincrby("s:exist:md5", score, k)
+        sha1 = rdb.get("l:{}".format(k))
         h = rdb.hgetall("h:{}".format(sha1)) 
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
@@ -44,9 +53,14 @@ class lookup(Resource):
             return {'message': 'Expecting a SHA-1 hex value'}, 400
         if not is_hex(sha1):
             return {'message': 'SHA-1 is not in hex format'}, 400
-        if not rdb.exists("h:{}".format(sha1.upper())):
+        k = sha1.upper()
+        score = 1
+        if not rdb.exists("h:{}".format(k)):
+            rdb.zincrby("s:nx:sha1", score, k)
             return {'message': 'Non existing SHA-1', 'query': sha1}, 404
-        h = rdb.hgetall("h:{}".format(sha1.upper()))
+        if stats:
+            rdb.zincrby("s:exist:sha1", score, k)
+        h = rdb.hgetall("h:{}".format(k))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
                 h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
