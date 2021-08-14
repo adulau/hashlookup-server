@@ -1,4 +1,6 @@
 [global]
 stats = yes
 stats_pubsub = yes
-
+[session]
+enable = yes
+ttl = 86400

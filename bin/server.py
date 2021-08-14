@@ -9,6 +9,9 @@ config = configparser.ConfigParser()
 config.read('../etc/server.conf')
 stats = config['global'].getboolean('stats')
 stats_pubsub = config['global'].getboolean('stats')
+score = 1
+session = config['session'].getboolean('enable')
+session_ttl = config['session'].get('ttl')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
 api = Api(app, version=version, title='hashlookup CIRCL API', description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. NSRL RDS database is included. More database will be included in the future. The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) some sample queries. The API can be tested live in the interface below.', doc='/', license='CC-BY', contact='info@circl.lu', ordered=True)
@@ -29,6 +32,7 @@ def client_info():
         ip = request.environ['HTTP_X_FORWARDED_FOR']
     user_agent = request.headers.get('User-Agent')
     return ({'ip_addr': ip, 'user_agent': user_agent})
+
 def pub_lookup(channel=None, k=None):
     if channel is None:
         return False
@@ -39,6 +43,18 @@ def pub_lookup(channel=None, k=None):
     rdb.publish(channel, json.dumps(client))
     return True
 
+def get_session():
+    if session is False:
+        return False
+    if request.headers.get('hashlookup_session') is None:
+        return False
+    session_name = request.headers.get('hashlookup_session')
+    if not rdb.exists("session:{}".format(session_name)):
+        return False
+    print("Using session_name: {}".format(session_name))
+    ttl = rdb.ttl("session:{}".format(session_name))
+    return ttl
+
 @api.route('/lookup/md5/<string:md5>')
 @api.doc(description="Lookup MD5.")
 class lookup(Resource):
@@ -48,17 +64,27 @@ class lookup(Resource):
         if not is_hex(md5):
             return {'message': 'MD5 is not in hex format'}, 400
         k = md5.upper()
-        score = 1
+        ttl = False
+        if session:
+            ttl = get_session()
         if not rdb.exists("l:{}".format(k)):
             if stats:
                 rdb.zincrby("s:nx:md5", score, k)
             if stats_pubsub:
                 pub_lookup(channel='nx', k=k)
+            if session and ttl is not False:
+                session_key = "session:{}:nx".format(request.headers.get('hashlookup_session'))
+                rdb.sadd(session_key, k)
+                rdb.expire(session_key, ttl)
             return {'message': 'Non existing MD5', 'query': md5}, 404
         if stats:
             rdb.zincrby("s:exist:md5", score, k)
         if stats_pubsub:
-            pub_lookup(channel='exist', k=k)    
+            pub_lookup(channel='exist', k=k)
+        if session and ttl is not False:
+            session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
+            rdb.sadd(session_key, k)
+            rdb.expire(session_key, ttl)
         sha1 = rdb.get("l:{}".format(k))
         h = rdb.hgetall("h:{}".format(sha1)) 
         if "OpSystemCode" in h:
@@ -78,17 +104,24 @@ class lookup(Resource):
         if not is_hex(sha1):
             return {'message': 'SHA-1 is not in hex format'}, 400
         k = sha1.upper()
-        score = 1
         if not rdb.exists("h:{}".format(k)):
             if stats:
                 rdb.zincrby("s:nx:sha1", score, k)
             if stats_pubsub:
                 pub_lookup(channel='nx', k=k)
+            if session and ttl is not False:
+                session_key = "session:{}:nx".format(request.headers.get('hashlookup_session'))
+                rdb.sadd(session_key, k)
+                rdb.expire(session_key, ttl)
             return {'message': 'Non existing SHA-1', 'query': sha1}, 404
         if stats:
             rdb.zincrby("s:exist:sha1", score, k)
         if stats_pubsub:
             pub_lookup(channel='exist', k=k)
+        if session and ttl is not False:
+            session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
+            rdb.sadd(session_key, k)
+            rdb.expire(session_key, ttl)
         h = rdb.hgetall("h:{}".format(k))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
@@ -139,6 +172,37 @@ class bulksha1(Resource):
         ret = []
         for val in json_data['hashes']:
             ret.append(rdb.hgetall("h:{}".format(val.upper())))
+        return ret
+
+@api.route('/session/create/<string:name>')
+@api.doc(description="Create a session key to keep search context. The session is attached to a name. After the session is created, the header `hashlookup_session` can be set to the session name.")
+class sessioncreate(Resource):
+    def get(self, name):
+        if name is None or len(name) > 120:
+            return {'message': 'Expecting a name for the session'}, 400
+        if session is False:
+            return {'message': 'Session feature is not enabled'}, 500
+        rdb.set('session:{}'.format(name), str(client_info()))
+        rdb.expire('session:{}'.format(name), session_ttl)
+        return {'message': 'Session {} created and session will expire in {} seconds'.format(name, session_ttl)}
+
+
+@api.route('/session/get/<string:name>')
+@api.doc(description="Return set of matching and non-matching hashes from a session.")
+class sessioncreate(Resource):
+    def get(self, name):
+        if name is None or len(name) > 120:
+            return {'message': 'Expecting a name for the session'}, 400
+        if session is False:
+            return {'message': 'Session feature is not enabled'}, 500
+        if not rdb.exists('session:{}'.format(name)):
+            return {'message': 'Non-existing session'}, 404
+        nx = rdb.smembers('session:{}:nx'.format(name))
+        exist = rdb.smembers('session:{}:exist'.format(name))
+        ret = {}
+        ret['nx'] = list(nx)
+        ret['exist'] = list(exist)
+        ret['info'] = rdb.get('session:{}'.format(name))
         return ret
 
 

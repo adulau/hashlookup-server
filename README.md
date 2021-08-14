@@ -223,6 +223,53 @@ curl -X 'POST'   'https://hashlookup.circl.lu/bulk/sha1' -H "Content-Type: appli
 |404| 404 means the searched hash is not present in the any of the database|
 |400| 400 means the input used for the hash is in an incorrect format|
 
+# API and Session
+
+A session feature can be enabled on the server side (not enabled on the public instance of CIRCL) to easily track submitted hashes.
+
+The session created has a TTL, and after the expiration, the associated queries of the session will be removed. This feature can be used
+to separate different forensic analysis and gather all the results in one go later.
+
+## Create a session
+
+A session can be created via the `/session/create/` endpoint with the name of the session. If the session is recreated, the TTL is reset to the default value.
+
+~~~
+curl -X 'GET'   'http://127.0.0.1:5000/session/create/test'   -H 'accept: application/json'
+~~~
+
+~~~json
+{
+  "message": "Session test created and session will expire in 86400 seconds"
+}
+~~~
+
+## Use a session
+
+To assign the results to a specific session, the `hashlookup_session` header requires to be set with the name of the created session. This can be used on all the `lookup` api endpoints.
+
+~~~
+curl -X 'GET'   'http://127.0.0.1:5000/lookup/md5/8ED4B4ED952526D89899E723F3488DE4'  -H 'hashlookup_session: test' -H 'accept: application/json' | jq .
+~~~
+
+## Fetch a session
+
+~~~
+curl -s -X 'GET'   'http://127.0.0.1:5000/session/get/test' -H 'accept: application/json' | jq .
+~~~
+
+~~~json
+{
+  "nx": [
+    "8ED4B4ED952526D89899E723F3488DE2",
+    "8ED4B4ED952526D89899E723F3488DE3"
+  ],
+  "exist": [
+    "8ED4B4ED952526D89899E723F3488DE4"
+  ],
+  "info": "{'ip_addr': '127.0.0.1', 'user_agent': 'curl/7.78.0'}"
+}
+~~~
 
 # Querying the hashlookup database via DNS
 
@@ -265,6 +312,8 @@ dig +short -t TXT 931606baaa7a2b4ef61198406f8fc3f4.dns.hashlookup.circl.lu | jq 
   "SpecialCode": ""
 }
 ~~~
+
+
 
 # Sample digital forensic use-cases
 
