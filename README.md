@@ -10,6 +10,7 @@ who love to dig into new experimental projects.
 - ReST API to lookup MD5 and SHA-1 hashes or bulk search from large dataset
 - A simple DNS server to provide hash lookup via DNS queries
 - Import scripts for the [NSRL database](https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl)
+- Support creation of DFIR session to keep track of systems analysed
 
 # Requirements
 
