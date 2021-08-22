@@ -1,5 +1,10 @@
 # Database structure of hashlookup
 
+## hash storage
+
+- `l:<md5>` set -> {sha1, sha1}
+- `h:<sha1>`` hash -> keys from NSRL or other data sources
+
 ## Publish-Subscribe channels
 
 - `nx` JSON message of non-existing hashes searched
