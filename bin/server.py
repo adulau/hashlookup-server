@@ -140,11 +140,10 @@ class lookup(Resource):
                 h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
         if rdb.exists("p:{}".format(k)):
             parents = []
-            for parent in rdb.smembers("p:{}".format(sha1)):
+            for parent in rdb.smembers("p:{}".format(k)):
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
                 h['parents'] = parents
-
         return h
 
 @api.route('/info')
