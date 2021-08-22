@@ -104,6 +104,9 @@ class lookup(Resource):
         if not is_hex(sha1):
             return {'message': 'SHA-1 is not in hex format'}, 400
         k = sha1.upper()
+        ttl = False
+        if session:
+            ttl = get_session()
         if not rdb.exists("h:{}".format(k)):
             if stats:
                 rdb.zincrby("s:nx:sha1", score, k)
