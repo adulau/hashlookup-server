@@ -2,8 +2,9 @@
 
 ## hash storage
 
-- `l:<md5>` set -> {sha1, sha1}
+- `l:<md5>` key/value -> {sha1, sha1}
 - `h:<sha1>`` hash -> keys from NSRL or other data sources
+- `p:<sha1>` set -> {sha1, sha1} for the parents of a hash (e.g. packages)
 
 ### Standard keys
 
