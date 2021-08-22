@@ -93,6 +93,12 @@ class lookup(Resource):
         if "ProductCode" in h:
             if rdb.exists("h-ProductCode:{}".format(h['ProductCode'])):
                 h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
+        if rdb.exists("p:{}".format(sha1)):
+            parents = []
+            for parent in rdb.smembers("p:{}".format(sha1)):
+                parent_details = rdb.hgetall("h:{}".format(parent))
+                parents.append(parent_details)
+            h['parents'] = parents
         return h 
 
 @api.route('/lookup/sha1/<string:sha1>')
@@ -132,6 +138,13 @@ class lookup(Resource):
         if "ProductCode" in h:
             if rdb.exists("h-ProductCode:{}".format(h['ProductCode'])):
                 h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
+        if rdb.exists("p:{}".format(k)):
+            parents = []
+            for parent in rdb.smembers("p:{}".format(sha1)):
+                parent_details = rdb.hgetall("h:{}".format(parent))
+                parents.append(parent_details)
+                h['parents'] = parents
+
         return h
 
 @api.route('/info')
