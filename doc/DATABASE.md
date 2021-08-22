@@ -5,6 +5,14 @@
 - `l:<md5>` set -> {sha1, sha1}
 - `h:<sha1>`` hash -> keys from NSRL or other data sources
 
+### Standard keys
+
+- `MD5`
+- `SHA-1`
+- `SHA-256`
+- `FileName`
+- `FileSize`
+
 ## Publish-Subscribe channels
 
 - `nx` JSON message of non-existing hashes searched
