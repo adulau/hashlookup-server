@@ -14,6 +14,12 @@
 - `SHA-256`
 - `FileName`
 - `FileSize`
+- `PackageArch`
+- `PackageDescription`
+- `PackageMaintainer`
+- `PackageName`
+- `PackageRelease`
+- `PackageVersion`
 
 ## Publish-Subscribe channels
 
