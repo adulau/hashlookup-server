@@ -99,6 +99,11 @@ class lookup(Resource):
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
             h['parents'] = parents
+        if rdb.exists("c:{}".format(sha1)):
+            children = []
+            for child in rdb.smembers("c:{}".format(sha1)):
+                children.append(child)
+            h['children'] = children
         return h 
 
 @api.route('/lookup/sha1/<string:sha1>')
@@ -144,6 +149,11 @@ class lookup(Resource):
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
                 h['parents'] = parents
+        if rdb.exists("c:{}".format(k)):
+            children = []
+            for child in rdb.smembers("c:{}".format(k)):
+                children.append(child)
+            h['children'] = children
         return h
 
 @api.route('/info')
