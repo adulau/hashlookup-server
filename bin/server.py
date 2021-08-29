@@ -25,6 +25,22 @@ def is_hex(s):
     except ValueError:
         return False
 
+def check_md5(value=None):
+    if value is None or len(value) != 32:
+        return False
+    if not is_hex(value):
+        return False
+    k = value.upper()
+    return k
+
+def check_sha1(value=None):
+    if value is None or len(value) != 40:
+        return False
+    if not is_hex(value):
+        return False
+    k = value.upper()
+    return k
+
 def client_info():
     if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
         ip = request.environ['REMOTE_ADDR']
@@ -59,11 +75,9 @@ def get_session():
 @api.doc(description="Lookup MD5.")
 class lookup(Resource):
     def get(self, md5):
-        if md5 is None or len(md5) != 32:
-            return {'message': 'Expecting a MD5 hex value'}, 400 
-        if not is_hex(md5):
-            return {'message': 'MD5 is not in hex format'}, 400
-        k = md5.upper()
+        if check_md5(value=md5) is False:
+            return {'message': 'MD5 value incorrect, expecting a MD5 value in hex format'}, 400
+        k = check_md5(value=md5)
         ttl = False
         if session:
             ttl = get_session()
@@ -110,11 +124,9 @@ class lookup(Resource):
 @api.doc(description="Lookup SHA-1.")
 class lookup(Resource):
     def get(self, sha1):
-        if sha1 is None or len(sha1) != 40:
-            return {'message': 'Expecting a SHA-1 hex value'}, 400
-        if not is_hex(sha1):
-            return {'message': 'SHA-1 is not in hex format'}, 400
-        k = sha1.upper()
+        if check_sha1(value=sha1) is False:
+            return {'message': 'SHA1 value incorrect, expecting a SHA1 value in hex format'}, 400
+        k = check_sha1(value=sha1)
         ttl = False
         if session:
             ttl = get_session()
@@ -182,6 +194,8 @@ class bulkmd5(Resource):
         ret = []
         for val in json_data['hashes']:
             k = val.upper()
+            if check_md5(value=k) is False:
+                continue
             if not rdb.exists("l:{}".format(k)):
                 if stats_pubsub:
                     pub_lookup(channel='nx', k=k)
@@ -204,6 +218,8 @@ class bulksha1(Resource):
         ret = []
         for val in json_data['hashes']:
             k = val.upper()
+            if check_sha1(value=k) is False:
+                continue
             if not rdb.exists("h:{}".format(k)):
                 if stats_pubsub:
                     pub_lookup(channel='nx', k=k)
