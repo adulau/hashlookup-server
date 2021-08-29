@@ -9,6 +9,7 @@ config = configparser.ConfigParser()
 config.read('../etc/server.conf')
 stats = config['global'].getboolean('stats')
 stats_pubsub = config['global'].getboolean('stats_pubsub')
+stats_public = config['global'].getboolean('stats_public')
 score = 1
 session = config['session'].getboolean('enable')
 session_ttl = config['session'].get('ttl')
@@ -263,6 +264,23 @@ class sessioncreate(Resource):
         ret['info'] = rdb.get('session:{}'.format(name))
         return ret
 
+@api.route('/stats/top')
+@api.doc(description="Return the top 100 of most queried values.")
+class stattop(Resource):
+    def get(self):
+        if stats_public is False:
+            return {'message': 'Public statistics not enabled'}, 400
+        ret = {}
+        ret['nx'] = rdb.zrevrange("s:nx:sha1", 0, 100, withscores=True)
+        exist = rdb.zrevrange("s:exist:sha1", 0, 100, withscores=True)
+        ret['exist'] = []
+        for value in exist:
+            name = rdb.hget("h:{}".format(value[0]), "FileName")
+            entry = {}
+            entry['FileName'] = name
+            entry['SHA-1'] = value
+            ret['exist'].append(entry)
+        return ret
 
 if __name__ == '__main__':
         app.run(host='0.0.0.0')
