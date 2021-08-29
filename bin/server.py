@@ -8,7 +8,7 @@ import json
 config = configparser.ConfigParser()
 config.read('../etc/server.conf')
 stats = config['global'].getboolean('stats')
-stats_pubsub = config['global'].getboolean('stats')
+stats_pubsub = config['global'].getboolean('stats_pubsub')
 score = 1
 session = config['session'].getboolean('enable')
 session_ttl = config['session'].get('ttl')
@@ -181,10 +181,17 @@ class bulkmd5(Resource):
             return {'message': 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.'}, 404
         ret = []
         for val in json_data['hashes']:
-            if not rdb.exists("l:{}".format(val.upper())):
+            k = val.upper()
+            if not rdb.exists("l:{}".format(k)):
+                if stats_pubsub:
+                    pub_lookup(channel='nx', k=k)
                 continue
-            sha1 = rdb.get("l:{}".format(val.upper()))
+            sha1 = rdb.get("l:{}".format(k))
             ret.append(rdb.hgetall("h:{}".format(sha1)))
+            if stats:
+                rdb.zincrby("s:exist:sha1", score, k)
+            if stats_pubsub:
+                pub_lookup(channel='exist', k=k)
         return ret
 
 @api.route('/bulk/sha1')
@@ -196,7 +203,17 @@ class bulksha1(Resource):
             return {'message': 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.'}, 404
         ret = []
         for val in json_data['hashes']:
-            ret.append(rdb.hgetall("h:{}".format(val.upper())))
+            k = val.upper()
+            if not rdb.exists("h:{}".format(k)):
+                if stats_pubsub:
+                    pub_lookup(channel='nx', k=k)
+                continue
+            k = val.upper()
+            ret.append(rdb.hgetall("h:{}".format(k)))
+            if stats:
+                rdb.zincrby("s:exist:sha1", score, k)
+            if stats_pubsub:
+                pub_lookup(channel='exist', k=k)
         return ret
 
 @api.route('/session/create/<string:name>')
