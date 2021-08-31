@@ -12,6 +12,8 @@
 - `MD5`
 - `SHA-1`
 - `SHA-256`
+- `TLSH`
+- `SSDEEP`
 - `FileName`
 - `FileSize`
 - `PackageArch`
@@ -20,6 +22,7 @@
 - `PackageName`
 - `PackageRelease`
 - `PackageVersion`
+- `KnownMalicious`
 
 ## Publish-Subscribe channels
 
