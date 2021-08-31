@@ -279,7 +279,7 @@ The domain to query is `<query>.dns.hashlookup.circl.lu`. The query can be `info
 ## Info of the hashlookup database
 
 ```
-dig +short -t TXT info.dns.hashlookup.circl.lu | jq -r . | jq .
+dig +short -t TXT info.dns.hashlookup.circl.lu | jq -j . | jq .
 ```
 
 ~~~json
@@ -298,7 +298,7 @@ dig +short -t TXT info.dns.hashlookup.circl.lu | jq -r . | jq .
 ## Query of a hash
 
 ```
-dig +short -t TXT 931606baaa7a2b4ef61198406f8fc3f4.dns.hashlookup.circl.lu | jq -r . | jq .
+dig +short -t TXT 931606baaa7a2b4ef61198406f8fc3f4.dns.hashlookup.circl.lu | jq -j . | jq .
 ```
 
 ~~~json
