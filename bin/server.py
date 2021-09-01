@@ -114,7 +114,12 @@ class lookup(Resource):
                 h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
         if rdb.exists("p:{}".format(sha1)):
             parents = []
-            for parent in rdb.smembers("p:{}".format(sha1)):
+            card = rdb.scard("p:{}".format(sha1))
+            if card <= 15:
+                p = rdb.smembers("p:{}".format(sha1))
+            else:
+                p = rdb.srandmember("p:{}".format(sha1), number=10)
+            for parent in p:
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
             h['parents'] = parents
@@ -162,7 +167,13 @@ class lookup(Resource):
                 h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
         if rdb.exists("p:{}".format(k)):
             parents = []
-            for parent in rdb.smembers("p:{}".format(k)):
+            card = rdb.scard("p:{}".format(k))
+            if card <= 15:
+                p = rdb.smembers("p:{}".format(k))
+            else:
+                p = []
+                p = rdb.srandmember("p:{}".format(sha1), number=10)
+            for parent in p:
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
                 h['parents'] = parents
