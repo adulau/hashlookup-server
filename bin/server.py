@@ -100,8 +100,11 @@ class lookup(Resource):
             session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
             rdb.sadd(session_key, k)
             rdb.expire(session_key, ttl)
-        sha1 = rdb.get("l:{}".format(k))
-        h = rdb.hgetall("h:{}".format(sha1)) 
+        if rdb.exist("h:{}".format(k)):
+            h = db.hgetall("h:{}".format(k))
+        else:
+            sha1 = rdb.get("l:{}".format(k))
+            h = rdb.hgetall("h:{}".format(sha1))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
                 h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
