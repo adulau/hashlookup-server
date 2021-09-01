@@ -82,7 +82,7 @@ class lookup(Resource):
         ttl = False
         if session:
             ttl = get_session()
-        if not rdb.exists("l:{}".format(k)):
+        if not (rdb.exists("l:{}".format(k)) or rdb.exists("h:{}".format(k))):
             if stats:
                 rdb.zincrby("s:nx:md5", score, k)
             if stats_pubsub:
@@ -100,8 +100,9 @@ class lookup(Resource):
             session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
             rdb.sadd(session_key, k)
             rdb.expire(session_key, ttl)
-        if rdb.exist("h:{}".format(k)):
-            h = db.hgetall("h:{}".format(k))
+        if rdb.exists("h:{}".format(k)):
+            h = rdb.hgetall("h:{}".format(k))
+            sha1 = k
         else:
             sha1 = rdb.get("l:{}".format(k))
             h = rdb.hgetall("h:{}".format(sha1))
