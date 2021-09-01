@@ -100,7 +100,7 @@ class lookup(Resource):
             session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
             rdb.sadd(session_key, k)
             rdb.expire(session_key, ttl)
-        if rdb.exists("h:{}".format(k)):
+        if rdb.exists("h:{}".format(k)) and not rdb.exists("l:{}".format(k)):
             h = rdb.hgetall("h:{}".format(k))
             sha1 = k
         else:
