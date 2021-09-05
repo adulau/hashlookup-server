@@ -172,7 +172,7 @@ class lookup(Resource):
                 p = rdb.smembers("p:{}".format(k))
             else:
                 p = []
-                p = rdb.srandmember("p:{}".format(sha1), number=10)
+                p = rdb.srandmember("p:{}".format(k), number=10)
             for parent in p:
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
