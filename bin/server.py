@@ -287,6 +287,9 @@ class stattop(Resource):
             return {'message': 'Public statistics not enabled'}, 400
         ret = {}
         ret['nx'] = rdb.zrevrange("s:nx:sha1", 0, 100, withscores=True)
+        for val in ret['nx']:
+            if rdb.exists("h:".format(val)):
+                ret['nx'].remove(val)
         exist = rdb.zrevrange("s:exist:sha1", 0, 100, withscores=True)
         ret['exist'] = []
         for value in exist:
