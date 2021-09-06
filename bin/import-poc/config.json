@@ -33,6 +33,6 @@
   "redis": {
     "hostname": "127.0.0.1",
     "port": 6666,
-    "flushdb_on_init": 1
+    "flushdb_on_init": 0
   }
 }
