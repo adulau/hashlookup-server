@@ -190,13 +190,10 @@ class info(Resource):
     def get(self):
         info = {}
         info['nsrl-version'] = rdb.get('nsrl-version')
-        info['nsrl-NSRL-items'] = rdb.get('stat:import')
-        info['nsrl-NSRL-Legacy-items'] = rdb.get('stat:NSRLLegacy')
-        info['nsrl-Android-items'] = rdb.get('stat:NSRLAndroid')
-        info['nsrl-iOS-items'] = rdb.get('stat:NSRLiOS')
-        info['nsrl-NSRLMfg'] = str(rdb.scard('s:MfgCode'))
-        info['nsrl-NSRLOS'] = str(rdb.scard('s:OpSystemCode'))
-        info['nsrl-NSRLProd'] = str(rdb.scard('s:ProductCode'))
+        info['stat:nsrl_modern_rds'] = rdb.get('stat:nsrl_modern_rds')
+        info['stat:nsrl_legacy'] = rdb.get('stat:nsrl_legacy')
+        info['stat:nsrl_ios'] = rdb.get('stat:nsrl_ios')
+        info['stat:nsrl_android'] = rdb.get('stat:nsrl_android')
         info['hashlookup-version'] = version
         return info
 
