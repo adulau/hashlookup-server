@@ -285,7 +285,7 @@ class stattop(Resource):
         ret = {}
         ret['nx'] = rdb.zrevrange("s:nx:sha1", 0, 100, withscores=True)
         for val in ret['nx']:
-            if rdb.exists("h:".format(val)):
+            if rdb.exists("h:{}".format(val[0])):
                 ret['nx'].remove(val)
         exist = rdb.zrevrange("s:exist:sha1", 0, 100, withscores=True)
         ret['exist'] = []
