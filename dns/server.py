@@ -40,8 +40,11 @@ def wildcard_hashlookup(query):
         return Response()
     if not rdb.exists("h:{}".format(sha1.upper())):
         return Response()
-
-    h = rdb.hgetall("h:{}".format(sha1))
+    h = {}
+    h['SHA-1'] = rdb.hget("h:{}".format(sha1), 'SHA-1')
+    h['MD5'] = rdb.hget("h:{}".format(sha1), 'MD5')
+    h['FileName'] = rdb.hget("h:{}".format(sha1), 'FileName')
+    print(h)
     #if "OpSystemCode" in h:
     #    if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
     #        h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
