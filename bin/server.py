@@ -48,7 +48,11 @@ def client_info():
     else:
         ip = request.environ['HTTP_X_FORWARDED_FOR']
     user_agent = request.headers.get('User-Agent')
-    return ({'ip_addr': ip, 'user_agent': user_agent})
+    if request.environ.get('HTTP_AUTHENTICATION') is not None:
+        auth = request.environ.get('HTTP_AUTHORIZATION')
+    else:
+        auth = None
+    return ({'ip_addr': ip, 'user_agent': user_agent, 'auth': auth})
 
 def pub_lookup(channel=None, k=None):
     if channel is None:
