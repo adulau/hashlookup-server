@@ -48,7 +48,7 @@ def client_info():
     else:
         ip = request.environ['HTTP_X_FORWARDED_FOR']
     user_agent = request.headers.get('User-Agent')
-    if request.environ.get('HTTP_AUTHENTICATION') is not None:
+    if request.environ.get('HTTP_AUTHORIZATION') is not None:
         auth = request.environ.get('HTTP_AUTHORIZATION')
     else:
         auth = None
@@ -123,6 +123,7 @@ class lookup(Resource):
                 p = rdb.smembers("p:{}".format(sha1))
             else:
                 p = rdb.srandmember("p:{}".format(sha1), number=10)
+            h['hashlookup:parent-total'] = card
             for parent in p:
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
@@ -177,6 +178,7 @@ class lookup(Resource):
             else:
                 p = []
                 p = rdb.srandmember("p:{}".format(k), number=10)
+            h['hashlookup:parent-total'] = card
             for parent in p:
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
