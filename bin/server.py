@@ -1,4 +1,4 @@
-version = "1.0"
+version = "1.1"
 from flask import Flask, url_for, send_from_directory, render_template, make_response, request
 from flask_restx import Resource, Api, reqparse
 import redis
@@ -263,7 +263,9 @@ class lookup(Resource):
 class info(Resource):
     def get(self):
         info = {}
+        lookup = rdb.info()
         info['nsrl-version'] = rdb.get('nsrl-version')
+        info['stat:hashlookup_total_keys'] = lookup['estimate_keys[default]']
         info['stat:nsrl_modern_rds'] = rdb.get('stat:nsrl_modern_rds')
         info['stat:nsrl_legacy'] = rdb.get('stat:nsrl_legacy')
         info['stat:nsrl_ios'] = rdb.get('stat:nsrl_ios')
