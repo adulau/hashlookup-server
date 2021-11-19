@@ -42,6 +42,14 @@ def check_sha1(value=None):
     k = value.upper()
     return k
 
+def check_sha256(value=None):
+    if value is None or len(value) != 64:
+        return False
+    if not is_hex(value):
+        return False
+    k = value.upper()
+    return k
+
 def client_info():
     if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
         ip = request.environ['REMOTE_ADDR']
@@ -189,6 +197,66 @@ class lookup(Resource):
                 children.append(child)
             h['children'] = children
         return h
+
+@api.route('/lookup/sha256/<string:sha256>')
+@api.doc(description="Lookup SHA-256.")
+class lookup(Resource):
+    def get(self, sha256):
+        if check_sha256(value=sha256) is False:
+            return {'message': 'SHA-256 value incorrect, expecting a SHA-256 value in hex format'}, 400
+        k = check_sha256(value=sha256)
+        ttl = False
+        if session:
+            ttl = get_session()
+        if not (rdb.exists("l:{}".format(k)) or rdb.exists("h:{}".format(k))):
+            if stats:
+                rdb.zincrby("s:nx:sha256", score, k)
+            if stats_pubsub:
+                pub_lookup(channel='nx', k=k)
+            if session and ttl is not False:
+                session_key = "session:{}:nx".format(request.headers.get('hashlookup_session'))
+                rdb.sadd(session_key, k)
+                rdb.expire(session_key, ttl)
+            return {'message': 'Non existing SHA-256', 'query': sha256}, 404
+        if stats:
+            rdb.zincrby("s:exist:sha256", score, k)
+        if stats_pubsub:
+            pub_lookup(channel='exist', k=k)
+        if session and ttl is not False:
+            session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
+            rdb.sadd(session_key, k)
+            rdb.expire(session_key, ttl)
+        if rdb.exists("h:{}".format(k)) and not rdb.exists("l:{}".format(k)):
+            h = rdb.hgetall("h:{}".format(k))
+            sha1 = k
+        else:
+            sha1 = rdb.get("l:{}".format(k))
+            h = rdb.hgetall("h:{}".format(sha1))
+        if "OpSystemCode" in h:
+            if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
+                h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
+        if "ProductCode" in h:
+            if rdb.exists("h-ProductCode:{}".format(h['ProductCode'])):
+                h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
+        if rdb.exists("p:{}".format(sha1)):
+            parents = []
+            card = rdb.scard("p:{}".format(sha1))
+            if card <= 15:
+                p = rdb.smembers("p:{}".format(sha1))
+            else:
+                p = rdb.srandmember("p:{}".format(sha1), number=10)
+            h['hashlookup:parent-total'] = card
+            for parent in p:
+                parent_details = rdb.hgetall("h:{}".format(parent))
+                parents.append(parent_details)
+            h['parents'] = parents
+        if rdb.exists("c:{}".format(sha1)):
+            children = []
+            for child in rdb.smembers("c:{}".format(sha1)):
+                children.append(child)
+            h['children'] = children
+        return h
+
 
 @api.route('/info')
 @api.doc(description="Info about the hashlookup database")
