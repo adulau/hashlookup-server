@@ -84,6 +84,20 @@ def get_session():
     ttl = rdb.ttl("session:{}".format(session_name))
     return ttl
 
+def calculate_trust(hobject=None):
+    """Trust level is between 0 and 100. 50 means we don't know the trust. Above 50, the trust level is more important as the file has been seen on various sources."""
+    if hobject is None:
+        return False
+    hashlookup_trust = 50
+    if 'hashlookup:parent-total' in hobject:
+        hashlookup_trust = hashlookup_trust + (5*hobject['hashlookup:parent-total'])
+    if 'KnownMalicious' in hobject:
+        hashlookup_trust = hashlookup_trust - 20
+    if hashlookup_trust > 100:
+        hashlookup_trust = 100
+    hobject['hashlookup:trust'] = hashlookup_trust
+    return hobject
+
 @api.route('/lookup/md5/<string:md5>')
 @api.doc(description="Lookup MD5.")
 class lookup(Resource):
@@ -141,6 +155,7 @@ class lookup(Resource):
             for child in rdb.smembers("c:{}".format(sha1)):
                 children.append(child)
             h['children'] = children
+        h = calculate_trust(hobject=h)
         return h 
 
 @api.route('/lookup/sha1/<string:sha1>')
@@ -196,6 +211,7 @@ class lookup(Resource):
             for child in rdb.smembers("c:{}".format(k)):
                 children.append(child)
             h['children'] = children
+        h = calculate_trust(hobject=h)
         return h
 
 @api.route('/lookup/sha256/<string:sha256>')
@@ -255,6 +271,7 @@ class lookup(Resource):
             for child in rdb.smembers("c:{}".format(sha1)):
                 children.append(child)
             h['children'] = children
+        h = calculate_trust(hobject=h)
         return h
 
 
