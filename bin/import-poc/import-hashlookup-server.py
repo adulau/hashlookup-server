@@ -187,7 +187,7 @@ class import_hash:
         print("**INIT** dataset {0} .".format(dataset))
 
         if self.flushrdb:
-            self.rdb.flushdb()
+            pass 
         else:
             self.rdb.delete("stat:{0}".format(dataset))
             self.rdb.set("stat:{0}".format(dataset), 0)
