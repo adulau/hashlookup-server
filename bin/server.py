@@ -1,4 +1,4 @@
-version = "1.1"
+version = "1.2"
 from flask import Flask, url_for, send_from_directory, render_template, make_response, request
 from flask_restx import Resource, Api, reqparse
 import redis
@@ -152,11 +152,18 @@ class lookup(Resource):
             h['parents'] = parents
         if rdb.exists("c:{}".format(sha1)):
             children = []
-            for child in rdb.smembers("c:{}".format(sha1)):
-                children.append(child)
+            card = rdb.scard("c:{}".format(sha1))
+            if card <= 15:
+                c = rdb.smembers("c:{}".format(sha1))
+            else:
+                c = rdb.srandmember("c:{}".format(sha1), number=10)
+            h['hashlookup:children-total'] = card
+            for child in c:
+                child_details = rdb.hgetall("h:{}".format(child))
+                children.append(child_details)
             h['children'] = children
         h = calculate_trust(hobject=h)
-        return h 
+        return h
 
 @api.route('/lookup/sha1/<string:sha1>')
 @api.doc(description="Lookup SHA-1.")
@@ -205,12 +212,20 @@ class lookup(Resource):
             for parent in p:
                 parent_details = rdb.hgetall("h:{}".format(parent))
                 parents.append(parent_details)
-                h['parents'] = parents
+            h['parents'] = parents
         if rdb.exists("c:{}".format(k)):
             children = []
-            for child in rdb.smembers("c:{}".format(k)):
-                children.append(child)
+            card = rdb.scard("c:{}".format(k))
+            if card <= 15:
+                c = rdb.smembers("c:{}".format(k))
+            else:
+                c = rdb.srandmember("c:{}".format(k), number=10)
+            h['hashlookup:children-total'] = card
+            for child in c:
+                child_details = rdb.hgetall("h:{}".format(child))
+                children.append(child_details)
             h['children'] = children
+
         h = calculate_trust(hobject=h)
         return h
 
@@ -268,9 +283,17 @@ class lookup(Resource):
             h['parents'] = parents
         if rdb.exists("c:{}".format(sha1)):
             children = []
-            for child in rdb.smembers("c:{}".format(sha1)):
-                children.append(child)
+            card = rdb.scard("c:{}".format(sha1))
+            if card <= 15:
+                c = rdb.smembers("c:{}".format(sha1))
+            else:
+                c = rdb.srandmember("c:{}".format(sha1), number=10)
+            h['hashlookup:children-total'] = card
+            for child in c:
+                child_details = rdb.hgetall("h:{}".format(child))
+                children.append(child_details)
             h['children'] = children
+
         h = calculate_trust(hobject=h)
         return h
 
