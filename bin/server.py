@@ -1,7 +1,14 @@
 #!/usr/bin/env python
 
 version = "1.2"
-from flask import Flask, url_for, send_from_directory, render_template, make_response, request
+from flask import (
+    Flask,
+    url_for,
+    send_from_directory,
+    render_template,
+    make_response,
+    request,
+)
 from flask_restx import Resource, Api, reqparse
 import redis
 import configparser
@@ -17,9 +24,19 @@ session = config['session'].getboolean('enable')
 session_ttl = config['session'].get('ttl')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
-api = Api(app, version=version, title='hashlookup CIRCL API', description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. For more details about all the datasets included [visit the website of the project](https://www.circl.lu/services/hashlookup/). The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) with sample queries and software using hashlookup. An offline version as Bloom filter is also [available](https://circl.lu/services/hashlookup/#how-to-quickly-check-a-set-of-files-in-a-local-directory). The API can be tested live in the interface below.', doc='/', license='CC-BY', contact='info@circl.lu', ordered=True)
+api = Api(
+    app,
+    version=version,
+    title='hashlookup CIRCL API',
+    description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. For more details about all the datasets included [visit the website of the project](https://www.circl.lu/services/hashlookup/). The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) with sample queries and software using hashlookup. An offline version as Bloom filter is also [available](https://circl.lu/services/hashlookup/#how-to-quickly-check-a-set-of-files-in-a-local-directory). The API can be tested live in the interface below.',
+    doc='/',
+    license='CC-BY',
+    contact='info@circl.lu',
+    ordered=True,
+)
 
 rdb = redis.Redis(host='127.0.0.1', port='6666', decode_responses=True)
+
 
 def is_hex(s):
     try:
@@ -27,6 +44,7 @@ def is_hex(s):
         return True
     except ValueError:
         return False
+
 
 def check_md5(value=None):
     if value is None or len(value) != 32:
@@ -36,6 +54,7 @@ def check_md5(value=None):
     k = value.upper()
     return k
 
+
 def check_sha1(value=None):
     if value is None or len(value) != 40:
         return False
@@ -44,6 +63,7 @@ def check_sha1(value=None):
     k = value.upper()
     return k
 
+
 def check_sha256(value=None):
     if value is None or len(value) != 64:
         return False
@@ -51,6 +71,7 @@ def check_sha256(value=None):
         return False
     k = value.upper()
     return k
+
 
 def client_info():
     if request.environ.get('HTTP_X_FORWARDED_FOR') is None:
@@ -62,7 +83,8 @@ def client_info():
         auth = request.environ.get('HTTP_AUTHORIZATION')
     else:
         auth = None
-    return ({'ip_addr': ip, 'user_agent': user_agent, 'auth': auth})
+    return {'ip_addr': ip, 'user_agent': user_agent, 'auth': auth}
+
 
 def pub_lookup(channel=None, k=None):
     if channel is None:
@@ -73,6 +95,7 @@ def pub_lookup(channel=None, k=None):
     client['value'] = k
     rdb.publish(channel, json.dumps(client))
     return True
+
 
 def get_session():
     if session is False:
@@ -86,13 +109,14 @@ def get_session():
     ttl = rdb.ttl("session:{}".format(session_name))
     return ttl
 
+
 def calculate_trust(hobject=None):
     """Trust level is between 0 and 100. 50 means we don't know the trust. Above 50, the trust level is more important as the file has been seen on various sources."""
     if hobject is None:
         return False
     hashlookup_trust = 50
     if 'hashlookup:parent-total' in hobject:
-        hashlookup_trust = hashlookup_trust + (5*hobject['hashlookup:parent-total'])
+        hashlookup_trust = hashlookup_trust + (5 * hobject['hashlookup:parent-total'])
     if 'KnownMalicious' in hobject:
         hashlookup_trust = hashlookup_trust - 20
     if hashlookup_trust > 100:
@@ -100,12 +124,15 @@ def calculate_trust(hobject=None):
     hobject['hashlookup:trust'] = hashlookup_trust
     return hobject
 
+
 @api.route('/lookup/md5/<string:md5>')
 @api.doc(description="Lookup MD5.")
 class lookup(Resource):
     def get(self, md5):
         if check_md5(value=md5) is False:
-            return {'message': 'MD5 value incorrect, expecting a MD5 value in hex format'}, 400
+            return {
+                'message': 'MD5 value incorrect, expecting a MD5 value in hex format'
+            }, 400
         k = check_md5(value=md5)
         ttl = False
         if session:
@@ -116,7 +143,9 @@ class lookup(Resource):
             if stats_pubsub:
                 pub_lookup(channel='nx', k=k)
             if session and ttl is not False:
-                session_key = "session:{}:nx".format(request.headers.get('hashlookup_session'))
+                session_key = "session:{}:nx".format(
+                    request.headers.get('hashlookup_session')
+                )
                 rdb.sadd(session_key, k)
                 rdb.expire(session_key, ttl)
             return {'message': 'Non existing MD5', 'query': md5}, 404
@@ -125,7 +154,9 @@ class lookup(Resource):
         if stats_pubsub:
             pub_lookup(channel='exist', k=k)
         if session and ttl is not False:
-            session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
+            session_key = "session:{}:exist".format(
+                request.headers.get('hashlookup_session')
+            )
             rdb.sadd(session_key, k)
             rdb.expire(session_key, ttl)
         if rdb.exists("h:{}".format(k)) and not rdb.exists("l:{}".format(k)):
@@ -136,10 +167,14 @@ class lookup(Resource):
             h = rdb.hgetall("h:{}".format(sha1))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
-                h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
+                h['OpSystemCode'] = rdb.hgetall(
+                    "h-OpSystemCode:{}".format(h['OpSystemCode'])
+                )
         if "ProductCode" in h:
             if rdb.exists("h-ProductCode:{}".format(h['ProductCode'])):
-                h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
+                h['ProductCode'] = rdb.hgetall(
+                    "h-ProductCode:{}".format(h['ProductCode'])
+                )
         if rdb.exists("p:{}".format(sha1)):
             parents = []
             card = rdb.scard("p:{}".format(sha1))
@@ -167,12 +202,15 @@ class lookup(Resource):
         h = calculate_trust(hobject=h)
         return h
 
+
 @api.route('/lookup/sha1/<string:sha1>')
 @api.doc(description="Lookup SHA-1.")
 class lookup(Resource):
     def get(self, sha1):
         if check_sha1(value=sha1) is False:
-            return {'message': 'SHA1 value incorrect, expecting a SHA1 value in hex format'}, 400
+            return {
+                'message': 'SHA1 value incorrect, expecting a SHA1 value in hex format'
+            }, 400
         k = check_sha1(value=sha1)
         ttl = False
         if session:
@@ -183,7 +221,9 @@ class lookup(Resource):
             if stats_pubsub:
                 pub_lookup(channel='nx', k=k)
             if session and ttl is not False:
-                session_key = "session:{}:nx".format(request.headers.get('hashlookup_session'))
+                session_key = "session:{}:nx".format(
+                    request.headers.get('hashlookup_session')
+                )
                 rdb.sadd(session_key, k)
                 rdb.expire(session_key, ttl)
             return {'message': 'Non existing SHA-1', 'query': sha1}, 404
@@ -192,16 +232,22 @@ class lookup(Resource):
         if stats_pubsub:
             pub_lookup(channel='exist', k=k)
         if session and ttl is not False:
-            session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
+            session_key = "session:{}:exist".format(
+                request.headers.get('hashlookup_session')
+            )
             rdb.sadd(session_key, k)
             rdb.expire(session_key, ttl)
         h = rdb.hgetall("h:{}".format(k))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
-                h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
+                h['OpSystemCode'] = rdb.hgetall(
+                    "h-OpSystemCode:{}".format(h['OpSystemCode'])
+                )
         if "ProductCode" in h:
             if rdb.exists("h-ProductCode:{}".format(h['ProductCode'])):
-                h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
+                h['ProductCode'] = rdb.hgetall(
+                    "h-ProductCode:{}".format(h['ProductCode'])
+                )
         if rdb.exists("p:{}".format(k)):
             parents = []
             card = rdb.scard("p:{}".format(k))
@@ -231,12 +277,15 @@ class lookup(Resource):
         h = calculate_trust(hobject=h)
         return h
 
+
 @api.route('/lookup/sha256/<string:sha256>')
 @api.doc(description="Lookup SHA-256.")
 class lookup(Resource):
     def get(self, sha256):
         if check_sha256(value=sha256) is False:
-            return {'message': 'SHA-256 value incorrect, expecting a SHA-256 value in hex format'}, 400
+            return {
+                'message': 'SHA-256 value incorrect, expecting a SHA-256 value in hex format'
+            }, 400
         k = check_sha256(value=sha256)
         ttl = False
         if session:
@@ -247,7 +296,9 @@ class lookup(Resource):
             if stats_pubsub:
                 pub_lookup(channel='nx', k=k)
             if session and ttl is not False:
-                session_key = "session:{}:nx".format(request.headers.get('hashlookup_session'))
+                session_key = "session:{}:nx".format(
+                    request.headers.get('hashlookup_session')
+                )
                 rdb.sadd(session_key, k)
                 rdb.expire(session_key, ttl)
             return {'message': 'Non existing SHA-256', 'query': sha256}, 404
@@ -256,7 +307,9 @@ class lookup(Resource):
         if stats_pubsub:
             pub_lookup(channel='exist', k=k)
         if session and ttl is not False:
-            session_key = "session:{}:exist".format(request.headers.get('hashlookup_session'))
+            session_key = "session:{}:exist".format(
+                request.headers.get('hashlookup_session')
+            )
             rdb.sadd(session_key, k)
             rdb.expire(session_key, ttl)
         if rdb.exists("h:{}".format(k)) and not rdb.exists("l:{}".format(k)):
@@ -267,10 +320,14 @@ class lookup(Resource):
             h = rdb.hgetall("h:{}".format(sha1))
         if "OpSystemCode" in h:
             if rdb.exists("h-OpSystemCode:{}".format(h['OpSystemCode'])):
-                h['OpSystemCode'] = rdb.hgetall("h-OpSystemCode:{}".format(h['OpSystemCode']))
+                h['OpSystemCode'] = rdb.hgetall(
+                    "h-OpSystemCode:{}".format(h['OpSystemCode'])
+                )
         if "ProductCode" in h:
             if rdb.exists("h-ProductCode:{}".format(h['ProductCode'])):
-                h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
+                h['ProductCode'] = rdb.hgetall(
+                    "h-ProductCode:{}".format(h['ProductCode'])
+                )
         if rdb.exists("p:{}".format(sha1)):
             parents = []
             card = rdb.scard("p:{}".format(sha1))
@@ -315,13 +372,18 @@ class info(Resource):
         info['hashlookup-version'] = version
         return info
 
+
 @api.route('/bulk/md5')
-@api.doc(description="Bulk search of MD5 hashes in a JSON array with the key \'hashes\'.")
+@api.doc(
+    description="Bulk search of MD5 hashes in a JSON array with the key \'hashes\'."
+)
 class bulkmd5(Resource):
     def post(self):
         json_data = request.get_json(force=True)
         if not 'hashes' in json_data:
-            return {'message': 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.'}, 404
+            return {
+                'message': 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.'
+            }, 404
         ret = []
         for val in json_data['hashes']:
             k = val.upper()
@@ -339,13 +401,16 @@ class bulkmd5(Resource):
                 pub_lookup(channel='exist', k=k)
         return ret
 
+
 @api.route('/bulk/sha1')
 @api.doc(description="Bulk search of SHA1 hashes in a JSON array with the \'hashes\'.")
 class bulksha1(Resource):
     def post(self):
         json_data = request.get_json(force=True)
         if not 'hashes' in json_data:
-            return {'message': 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.'}, 404
+            return {
+                'message': 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.'
+            }, 404
         ret = []
         for val in json_data['hashes']:
             k = val.upper()
@@ -363,8 +428,11 @@ class bulksha1(Resource):
                 pub_lookup(channel='exist', k=k)
         return ret
 
+
 @api.route('/session/create/<string:name>')
-@api.doc(description="Create a session key to keep search context. The session is attached to a name. After the session is created, the header `hashlookup_session` can be set to the session name.")
+@api.doc(
+    description="Create a session key to keep search context. The session is attached to a name. After the session is created, the header `hashlookup_session` can be set to the session name."
+)
 class sessioncreate(Resource):
     def get(self, name):
         if name is None or len(name) > 120:
@@ -373,7 +441,11 @@ class sessioncreate(Resource):
             return {'message': 'Session feature is not enabled'}, 500
         rdb.set('session:{}'.format(name), str(client_info()))
         rdb.expire('session:{}'.format(name), session_ttl)
-        return {'message': 'Session {} created and session will expire in {} seconds'.format(name, session_ttl)}
+        return {
+            'message': 'Session {} created and session will expire in {} seconds'.format(
+                name, session_ttl
+            )
+        }
 
 
 @api.route('/session/get/<string:name>')
@@ -393,6 +465,7 @@ class sessioncreate(Resource):
         ret['exist'] = list(exist)
         ret['info'] = rdb.get('session:{}'.format(name))
         return ret
+
 
 @api.route('/stats/top')
 @api.doc(description="Return the top 100 of most queried values.")
@@ -415,5 +488,6 @@ class stattop(Resource):
             ret['exist'].append(entry)
         return ret
 
+
 if __name__ == '__main__':
-        app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0')
