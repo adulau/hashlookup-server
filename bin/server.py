@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 version = "1.2"
 from flask import Flask, url_for, send_from_directory, render_template, make_response, request
 from flask_restx import Resource, Api, reqparse
@@ -15,7 +17,7 @@ session = config['session'].getboolean('enable')
 session_ttl = config['session'].get('ttl')
 app = Flask(__name__)
 app.url_map.strict_slashes = False
-api = Api(app, version=version, title='hashlookup CIRCL API', description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. NSRL RDS database is included. More database will be included in the future. The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) some sample queries. The API can be tested live in the interface below.', doc='/', license='CC-BY', contact='info@circl.lu', ordered=True)
+api = Api(app, version=version, title='hashlookup CIRCL API', description='![](https://www.circl.lu/assets/images/circl-logo.png)\n[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. For more details about all the datasets included [visit the website of the project](https://www.circl.lu/services/hashlookup/). The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json). A [documentation is available with](https://www.circl.lu/services/hashlookup/) with sample queries and software using hashlookup. An offline version as Bloom filter is also [available](https://circl.lu/services/hashlookup/#how-to-quickly-check-a-set-of-files-in-a-local-directory). The API can be tested live in the interface below.', doc='/', license='CC-BY', contact='info@circl.lu', ordered=True)
 
 rdb = redis.Redis(host='127.0.0.1', port='6666', decode_responses=True)
 
