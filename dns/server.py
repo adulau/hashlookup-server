@@ -1,4 +1,4 @@
-version = "0.1"
+version = "0.2"
 from nserver import NameServer, Response, A, NS, TXT
 import redis
 import json
@@ -14,13 +14,9 @@ def say_info(query):
     #if query.name.endswith(".com.au"):
     #    return TXT(query.name, "G'day mate")
     info = {}
+    lookup = rdb.info()
     info['nsrl-version'] = rdb.get('nsrl-version')
-    info['nsrl-NSRL-items'] = rdb.get('stat:import')
-    info['nsrl-Android-items'] = rdb.get('stat:NSRLAndroid')
-    info['nsrl-iOS-items'] = rdb.get('stat:NSRLiOS')
-    info['nsrl-NSRLMfg'] = rdb.get('stat:NSRLMfg-import')
-    info['nsrl-NSRLOS'] = rdb.get('stat:NSRLOS-import')
-    info['nsrl-NSRLProd'] = rdb.get('stat:NSRLProd-import')
+    info['stat:hashlookup_total_keys'] = lookup['estimate_keys[default]']
     info['hashlookup-version'] = version
     return TXT(query.name, json.dumps(info))
 
@@ -53,6 +49,11 @@ def wildcard_hashlookup(query):
     #        h['ProductCode'] = rdb.hgetall("h-ProductCode:{}".format(h['ProductCode']))
 
     return TXT(query.name, json.dumps(h))
+
+#@ns.rule("**", ["ANY"])
+#def do_nothing(query):
+#    print(query)
+#    return TXT(query.name, "") 
 
 
 if __name__ == "__main__":
