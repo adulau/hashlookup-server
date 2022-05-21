@@ -9,7 +9,7 @@ who love to dig into new experimental projects.
 
 - ReST API to lookup MD5, SHA-1 or SHA-256 hashes or bulk search from large dataset
 - A simple DNS server to provide hash lookup via DNS queries
-- Import scripts for the [NSRL database](https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl)
+- Import scripts for the [NSRL database](https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl) (old format) and new NSRL RDSv3 format via [hashlookup-nsrl importer](https://github.com/hashlookup/hashlookup-nsrl)
 - Support generic [hashlookup import script](https://github.com/hashlookup/hashlookup-json-importer)
 - Support standard [hashlookup format](https://datatracker.ietf.org/doc/draft-dulaunoy-hashlookup-format/)
 - Support creation of DFIR session to keep track of systems analysed
