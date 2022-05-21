@@ -2,25 +2,26 @@
 
 hashlookup-server is a minimal and fast open source server (ReST/API) to lookup quickly hash value from large dataset.
 
-The code was quickly written during some boring meetings. The code is still alpha and installation documentation is missing. I released it for the adventurous people
+The code was quickly written during some boring meetings. The code is still beta (but already used in production) and installation documentation is partial. I released it for the adventurous people
 who love to dig into new experimental projects.
 
 # Features
 
-- ReST API to lookup MD5 and SHA-1 hashes or bulk search from large dataset
+- ReST API to lookup MD5, SHA-1 or SHA-256 hashes or bulk search from large dataset
 - A simple DNS server to provide hash lookup via DNS queries
 - Import scripts for the [NSRL database](https://www.nist.gov/itl/ssd/software-quality-group/national-software-reference-library-nsrl)
+- Support standard [hashlookup format](https://datatracker.ietf.org/doc/draft-dulaunoy-hashlookup-format/)
 - Support creation of DFIR session to keep track of systems analysed
 
 # Requirements
 
-The server requires a recent version of Python (Python 3.6 or better) and a [kvrocks](https://github.com/KvrocksLabs/kvrocks) database.
+The server requires a recent version of Python (Python 3.6 or better) and a [kvrocks](https://github.com/apache/incubator-kvrocks) database.
 
 If you don't want to run your own local server, you can use and test [hashlookup.circl.lu](https://hashlookup.circl.lu/).
 
 ## Public Online version - CIRCL hashlookup (hashlookup.circl.lu)
 
-[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. NSRL RDS database is included. More database will be included in the future. The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json).
+[CIRCL hash lookup](https://hashlookup.circl.lu/) is a public API to lookup hash values against known database of files. NSRL RDS database is included. More database are included ([for more info](https://circl.lu/services/hashlookup/)). The API is accessible via HTTP ReST API and the API is also [described as an OpenAPI](https://hashlookup.circl.lu/swagger.json).
 
 # Is it a database of malicious or non-malicious hash of files?
 
@@ -382,6 +383,7 @@ sha1sum * | cut -f1 -d" " | parallel 'curl -f -s https://hashlookup.circl.lu/loo
 
 - [PyHashlookup](https://github.com/CIRCL/PyHashlookup) is a client API in Python to query CIRCL hashlookup.
 - [The Hive Project - Cortex Analyzers](https://github.com/TheHive-Project/Cortex-Analyzers/pull/1015) pull-request to be integrated in The Hive Cortex Analyzers.
+- [hashlookup-forensic-analyser](https://github.com/hashlookup/hashlookup-forensic-analyser) - Analyse a forensic target (such as a directory) to find and report files found and not found from CIRCL hashlookup public service or the Bloom filter from CIRCL hashlookup. 
 
 # License
 
