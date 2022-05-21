@@ -216,6 +216,54 @@ curl -X 'POST'   'https://hashlookup.circl.lu/bulk/sha1' -H "Content-Type: appli
 ]
 ~~~
 
+# Find parents or children of SHA-1 hashes
+
+~~~
+curl -s -X 'GET'   'https://hashlookup.circl.lu/parents/732458574c63c3790cad093a36eadfb990d11ee6/10/0'   -H 'accept: application/json' | jq .
+~~~
+
+~~~json
+{
+  "parents": [
+    "0844D3CB657F353AB2CE1DB164CE6BDFFD2BB6FD",
+    "1A092638422762239916983CBB72DE7DDA4AC55C",
+    "1D4AB60C729A361D46A90D92DEFACA518B2918D2",
+    "1E10EA9987C122605DBE27813C264D123CD7F06D",
+    "1EAE139BC814D30FD0A35EA65DE7B900D8F9B32E",
+    "209721EED90BADEDFC6492BA88B2BE47C4FD227F",
+    "2536D5629A9F4E70415C84D29832D78196E5DFCA",
+    "314D0C987794C04CC36FF72F96512CEFE230C374",
+    "36ACB0DA0279B63059D0CC5B85F3B157492FB00E",
+    "423520AC1D58E3C4AA8834E70026DB930D9B2052"
+  ],
+  "cursor": "423520AC1D58E3C4AA8834E70026DB930D9B2052",
+  "total": 42
+}
+~~~
+
+~~~
+curl -s -X 'GET'   'https://hashlookup.circl.lu/parents/732458574c63c3790cad093a36eadfb990d11ee6/10/423520AC1D58E3C4AA8834E70026DB930D9B2052'   -H 'accept: application/json' | jq .
+~~~
+
+~~~json
+{
+  "parents": [
+    "44F00A8980D93F7B4D0C2736BED583C936D60AC4",
+    "4D81C1067049D8C804FE5FD2DA507664830D1374",
+    "5910B8B3B9BA9D9A78BC0F5851EEF945A9031066",
+    "59335138486480F9C28CDE7E99C636C0A3D78C96",
+    "5FC0DA1534EBE056703A9A7F789BC4040C0576A0",
+    "621B7639C3B4770AD4511B3477C0D26316C5BD7B",
+    "64EB8E8FDF7A505F3ADCAA651197A393AD33597E",
+    "669C2474462A883EDCC619F2EC8884F60DAB1C32",
+    "6D2134F4245236DB19784B37DC8200A5AFF6D98A",
+    "6F824CC9BA2D6CB6839144D1B697143309D98805"
+  ],
+  "cursor": "6F824CC9BA2D6CB6839144D1B697143309D98805",
+  "total": 42
+}
+~~~
+
 ## API and HTTP return codes
 
 |HTTP return code | Description and Interpretation|
@@ -339,5 +387,5 @@ sha1sum * | cut -f1 -d" " | parallel 'curl -f -s https://hashlookup.circl.lu/loo
 
 This software is licensed under GNU Affero General Public License version 3.
 
-- Copyright (C) 2021 CIRCL - Computer Incident Response Center Luxembourg
-- Copyright (C) 2021 Alexandre Dulaunoy
+- Copyright (C) 2021-2022 CIRCL - Computer Incident Response Center Luxembourg
+- Copyright (C) 2021-2022 Alexandre Dulaunoy
