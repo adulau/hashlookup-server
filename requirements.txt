@@ -1,5 +1,5 @@
 flask
 flask_restx
-redis
+git+https://github.com/hashlookup/redis-py
 nserver
 
