@@ -357,6 +357,58 @@ class lookup(Resource):
         return h
 
 
+@api.route('/parents/<string:sha1>/<int:count>/<string:cursor>')
+@api.doc(
+    description="Return parents from a given SHA1. A number of element to return and an offset must be given. If not set it will be the 100 first elements. A cursor must be given to paginate over. The starting cursor is 0."
+)
+class parents(Resource):
+    def get(self, sha1, count, cursor):
+        if check_sha1(value=sha1) is False:
+            return {
+                'message': 'SHA1 value incorrect, expecting a SHA1 value in hex format.'
+            }, 400
+        sha1 = check_sha1(value=sha1)
+        if not count:
+            count = 100
+        if not cursor:
+            cursor = 0
+        if not rdb.exists("p:{}".format(sha1)):
+            return {'message': 'The SHA1 value has no known parent.'}, 404
+        parents = []
+        cursor, parents = rdb.sscan("p:{}".format(sha1), count=count, cursor=cursor)
+        h = {}
+        h['parents'] = parents
+        h['cursor'] = cursor
+        h['total'] = rdb.scard("p:{}".format(sha1))
+        return h
+
+
+@api.route('/children/<string:sha1>/<int:count>/<string:cursor>')
+@api.doc(
+    description="Return children from a given SHA1.  A number of element to return and an offset must be given. If not set it will be the 100 first elements. A cursor must be given to paginate over. The starting cursor is 0."
+)
+class children(Resource):
+    def get(self, sha1, count, cursor):
+        if check_sha1(value=sha1) is False:
+            return {
+                'message': 'SHA1 value incorrect, expecting a SHA1 value in hex format.'
+            }, 400
+        sha1 = check_sha1(value=sha1)
+        if not count:
+            count = 100
+        if not cursor:
+            cursor = 0
+        if not rdb.exists("c:{}".format(sha1)):
+            return {'message': 'The SHA1 value has no known child.'}, 404
+        children = []
+        cursor, children = rdb.sscan("c:{}".format(sha1), count=count, cursor=cursor)
+        h = {}
+        h['children'] = children
+        h['cursor'] = cursor
+        h['total'] = rdb.scard("c:{}".format(sha1))
+        return h
+
+
 @api.route('/info')
 @api.doc(description="Info about the hashlookup database")
 class info(Resource):
