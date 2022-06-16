@@ -128,6 +128,10 @@ def calculate_trust(hobject=None):
 @api.route('/lookup/md5/<string:md5>')
 @api.doc(description="Lookup MD5.")
 class lookup(Resource):
+    @api.doc(id='get_lookup_md5')
+    @api.response(200, 'Success')
+    @api.response(400, 'MD5 value incorrect, expecting a MD5 value in hex format')
+    @api.response(404, 'Non existing MD5')
     def get(self, md5):
         if check_md5(value=md5) is False:
             return {
@@ -206,6 +210,10 @@ class lookup(Resource):
 @api.route('/lookup/sha1/<string:sha1>')
 @api.doc(description="Lookup SHA-1.")
 class lookup(Resource):
+    @api.doc(id='get_lookup_sha1')
+    @api.response(200, 'Success')
+    @api.response(400, 'SHA1 value incorrect, expecting a SHA1 value in hex format')
+    @api.response(404, 'Non existing SHA1')
     def get(self, sha1):
         if check_sha1(value=sha1) is False:
             return {
@@ -281,6 +289,10 @@ class lookup(Resource):
 @api.route('/lookup/sha256/<string:sha256>')
 @api.doc(description="Lookup SHA-256.")
 class lookup(Resource):
+    @api.doc(id='get_lookup_sha256')
+    @api.response(200, 'Success')
+    @api.response(400, 'SHA-256 value incorrect, expecting a SHA-256 value in hex format')
+    @api.response(404, 'Non existing SHA-256')
     def get(self, sha256):
         if check_sha256(value=sha256) is False:
             return {
@@ -362,6 +374,9 @@ class lookup(Resource):
     description="Return parents from a given SHA1. A number of element to return and an offset must be given. If not set it will be the 100 first elements. A cursor must be given to paginate over. The starting cursor is 0."
 )
 class parents(Resource):
+    @api.response(200, 'Success')
+    @api.response(400, 'SHA1 value incorrect, expecting a SHA1 value in hex format')
+    @api.response(404, 'The SHA1 value has no known parent.')
     def get(self, sha1, count, cursor):
         if check_sha1(value=sha1) is False:
             return {
@@ -388,6 +403,9 @@ class parents(Resource):
     description="Return children from a given SHA1.  A number of element to return and an offset must be given. If not set it will be the 100 first elements. A cursor must be given to paginate over. The starting cursor is 0."
 )
 class children(Resource):
+    @api.response(200, 'Success')
+    @api.response(400, 'SHA1 value incorrect, expecting a SHA1 value in hex format')
+    @api.response(404, 'The SHA1 value has no known child.')
     def get(self, sha1, count, cursor):
         if check_sha1(value=sha1) is False:
             return {
@@ -430,6 +448,8 @@ class info(Resource):
     description="Bulk search of MD5 hashes in a JSON array with the key \'hashes\'."
 )
 class bulkmd5(Resource):
+    @api.response(200, 'Success')
+    @api.response(404, 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.')
     def post(self):
         json_data = request.get_json(force=True)
         if not 'hashes' in json_data:
@@ -457,6 +477,8 @@ class bulkmd5(Resource):
 @api.route('/bulk/sha1')
 @api.doc(description="Bulk search of SHA1 hashes in a JSON array with the \'hashes\'.")
 class bulksha1(Resource):
+    @api.response(200, 'Success')
+    @api.response(404, 'JSON format incorrect. An array of hashes in the key \'hashes\' is expected.')
     def post(self):
         json_data = request.get_json(force=True)
         if not 'hashes' in json_data:
@@ -486,6 +508,10 @@ class bulksha1(Resource):
     description="Create a session key to keep search context. The session is attached to a name. After the session is created, the header `hashlookup_session` can be set to the session name."
 )
 class sessioncreate(Resource):
+    @api.doc(id='get_session_create')
+    @api.response(200, 'Success')
+    @api.response(400, 'Expecting a name for the session')
+    @api.response(500, 'Session feature is not enabled')
     def get(self, name):
         if name is None or len(name) > 120:
             return {'message': 'Expecting a name for the session'}, 400
@@ -503,6 +529,10 @@ class sessioncreate(Resource):
 @api.route('/session/get/<string:name>')
 @api.doc(description="Return set of matching and non-matching hashes from a session.")
 class sessioncreate(Resource):
+    @api.doc(id='get_session_matches')
+    @api.response(200, 'Success')
+    @api.response(400, 'Expecting a name for the session')
+    @api.response(500, 'Session feature is not enabled')
     def get(self, name):
         if name is None or len(name) > 120:
             return {'message': 'Expecting a name for the session'}, 400
@@ -522,6 +552,8 @@ class sessioncreate(Resource):
 @api.route('/stats/top')
 @api.doc(description="Return the top 100 of most queried values.")
 class stattop(Resource):
+    @api.response(200, 'Success')
+    @api.response(400, 'Public statistics not enabled')
     def get(self):
         if stats_public is False:
             return {'message': 'Public statistics not enabled'}, 400
